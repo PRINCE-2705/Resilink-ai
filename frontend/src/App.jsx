@@ -17,7 +17,7 @@ function App() {
     if (!text.trim()) return;
     setLoading(true);
     try {
-      const response = await axios.post("http://127.0.0.1:8000/extract", { text });
+      const response = await axios.post("http://https://resilink-ai.vercel.app/:8000/extract", { text });
       setResult(response.data.data);
       setText(""); // clear input after submit
     } catch (error) {
@@ -30,7 +30,7 @@ function App() {
   // --- ADMIN LOGIC ---
   const fetchHotspots = async () => {
     try {
-      const response = await axios.get("http://127.0.0.1:8000/hotspots");
+      const response = await axios.get("http://https://resilink-ai.vercel.app/:8000/hotspots");
       setHotspots(response.data.data);
     } catch (error) {
       console.error("Failed to fetch hotspots");
@@ -40,7 +40,7 @@ function App() {
   const handleGenerateLetter = async (location, resource) => {
     setLetterLoading(true);
     try {
-      const response = await axios.post("http://127.0.0.1:8000/generate-letter", {
+      const response = await axios.post("http://https://resilink-ai.vercel.app/:8000/generate-letter", {
         location: location,
         resource: resource
       });
