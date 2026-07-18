@@ -1,6 +1,6 @@
 import requests
 import json
-import sqlite3  # Naya import
+import sqlite3  
 import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,10 +20,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to Resilink AI Backend API. Server is successfully running! 🚀"}
+
 class ComplaintRequest(BaseModel):
     text: str
 
-# SQLite Setup (Ye table apne aap bana lega)
+
 def init_db():
     conn = sqlite3.connect("resilink.db")
     cursor = conn.cursor()
