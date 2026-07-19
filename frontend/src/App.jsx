@@ -23,7 +23,8 @@ function App() {
     }
     setLoading(true);
     try {
-      const response = await axios.post("[https://resilink-ai.onrender.com/extract](https://resilink-ai.onrender.com/extract)", { 
+      // YAHAN URL THEEK KIYA HAI 👇
+      const response = await axios.post("https://resilink-ai.onrender.com/extract", { 
         name: name,
         phone: phone,
         text: text 
@@ -42,7 +43,8 @@ function App() {
 
   const fetchHotspots = async () => {
     try {
-      const response = await axios.get("[https://resilink-ai.onrender.com/hotspots](https://resilink-ai.onrender.com/hotspots)");
+      // YAHAN URL THEEK KIYA HAI 👇
+      const response = await axios.get("https://resilink-ai.onrender.com/hotspots");
       setHotspots(response.data.data);
     } catch (error) {
       console.error("Failed to fetch hotspots");
@@ -52,7 +54,8 @@ function App() {
   const handleGenerateLetter = async (location, resource) => {
     setLetterLoading(true);
     try {
-      const response = await axios.post("[https://resilink-ai.onrender.com/generate-letter](https://resilink-ai.onrender.com/generate-letter)", {
+      // YAHAN URL THEEK KIYA HAI 👇
+      const response = await axios.post("https://resilink-ai.onrender.com/generate-letter", {
         location: location,
         resource: resource
       });
