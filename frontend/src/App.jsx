@@ -2,24 +2,37 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 
 function App() {
-  const [view, setView] = useState('citizen'); // 'citizen' or 'admin'
+  const [view, setView] = useState('citizen');
+  
+  // Naye Citizen States
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [text, setText] = useState("");
+  const [ticketId, setTicketId] = useState(null);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   
-  // Admin states
   const [hotspots, setHotspots] = useState([]);
   const [generatedLetter, setGeneratedLetter] = useState("");
   const [letterLoading, setLetterLoading] = useState(false);
 
-  // --- CITIZEN LOGIC ---
   const handleSubmit = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() || !name.trim() || !phone.trim()) {
+      alert("Please fill all fields (Name, Phone, and Complaint)!");
+      return;
+    }
     setLoading(true);
     try {
-      const response = await axios.post("https://resilink-ai.onrender.com/extract", { text });
+      const response = await axios.post("[https://resilink-ai.onrender.com/extract](https://resilink-ai.onrender.com/extract)", { 
+        name: name,
+        phone: phone,
+        text: text 
+      });
       setResult(response.data.data);
-      setText(""); // clear input after submit
+      setTicketId(response.data.ticket_id);
+      setText(""); 
+      setName("");
+      setPhone("");
     } catch (error) {
       alert("Error: Backend se connect nahi ho paya!");
     } finally {
@@ -27,10 +40,9 @@ function App() {
     }
   };
 
-  // --- ADMIN LOGIC ---
   const fetchHotspots = async () => {
     try {
-      const response = await axios.get("https://resilink-ai.onrender.com/hotspots");
+      const response = await axios.get("[https://resilink-ai.onrender.com/hotspots](https://resilink-ai.onrender.com/hotspots)");
       setHotspots(response.data.data);
     } catch (error) {
       console.error("Failed to fetch hotspots");
@@ -40,7 +52,7 @@ function App() {
   const handleGenerateLetter = async (location, resource) => {
     setLetterLoading(true);
     try {
-      const response = await axios.post("https://resilink-ai.onrender.com/generate-letter", {
+      const response = await axios.post("[https://resilink-ai.onrender.com/generate-letter](https://resilink-ai.onrender.com/generate-letter)", {
         location: location,
         resource: resource
       });
@@ -52,7 +64,6 @@ function App() {
     }
   };
 
-  // Load hotspots when switching to admin view
   useEffect(() => {
     if (view === 'admin') {
       fetchHotspots();
@@ -62,7 +73,6 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50 p-4 font-sans">
       
-      {/* Navbar / Tabs */}
       <div className="max-w-4xl mx-auto flex justify-center space-x-4 mb-8">
         <button 
           onClick={() => setView('citizen')}
@@ -78,12 +88,28 @@ function App() {
         </button>
       </div>
 
-      {/* CITIZEN VIEW */}
       {view === 'citizen' && (
         <div className="max-w-lg mx-auto bg-white rounded-2xl shadow-xl p-8">
           <h1 className="text-3xl font-bold text-gray-800 text-center mb-2">Resilink AI</h1>
           <p className="text-gray-500 text-center mb-6">File a Civic Complaint</p>
           
+          <div className="flex gap-4 mb-4">
+            <input 
+              type="text" 
+              value={name} 
+              onChange={(e) => setName(e.target.value)} 
+              placeholder="Your Name" 
+              className="w-1/2 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+            />
+            <input 
+              type="text" 
+              value={phone} 
+              onChange={(e) => setPhone(e.target.value)} 
+              placeholder="Phone Number" 
+              className="w-1/2 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+            />
+          </div>
+
           <textarea 
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -99,9 +125,12 @@ function App() {
             {loading ? "Analyzing..." : "Submit Complaint"}
           </button>
 
-          {result && (
+          {result && ticketId && (
             <div className="mt-8 p-6 bg-indigo-50 rounded-xl border border-indigo-100">
-              <h2 className="text-lg font-bold text-indigo-900 mb-4 border-b border-indigo-200 pb-2">Issue Logged Successfully</h2>
+              <div className="flex justify-between items-center border-b border-indigo-200 pb-2 mb-4">
+                <h2 className="text-lg font-bold text-indigo-900">Issue Logged Successfully</h2>
+                <span className="bg-indigo-600 text-white px-3 py-1 rounded-lg text-sm font-bold">{ticketId}</span>
+              </div>
               <div className="space-y-2">
                 <p><strong>Location:</strong> {result.location}</p>
                 <p><strong>Resource:</strong> {result.resource_type}</p>
@@ -112,12 +141,10 @@ function App() {
         </div>
       )}
 
-      {/* ADMIN VIEW */}
       {view === 'admin' && (
         <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Crisis Hotspots</h2>
           
-          {/* Hotspots Table */}
           <div className="overflow-x-auto mb-8">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -153,7 +180,6 @@ function App() {
             </table>
           </div>
 
-          {/* AI Generated Letter Display */}
           {generatedLetter && (
             <div className="mt-8 p-6 bg-yellow-50 rounded-xl border border-yellow-200">
               <h3 className="text-lg font-bold text-yellow-900 mb-4 border-b border-yellow-200 pb-2">AI Drafted Letter for Collector</h3>

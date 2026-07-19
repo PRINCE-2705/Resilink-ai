@@ -1,7 +1,8 @@
 import requests
 import json
-import sqlite3  
+import sqlite3
 import os
+import random
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -25,15 +26,20 @@ def read_root():
     return {"message": "Welcome to Resilink AI Backend API. Server is successfully running! 🚀"}
 
 class ComplaintRequest(BaseModel):
+    name: str
+    phone: str
     text: str
 
-
+# Naya Database Setup (Name aur Phone ke sath)
 def init_db():
     conn = sqlite3.connect("resilink.db")
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS complaints (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ticket_id TEXT,
+            name TEXT,
+            phone TEXT,
             raw_text TEXT,
             location TEXT,
             resource_type TEXT,
@@ -48,6 +54,9 @@ init_db()
 @app.post("/extract")
 async def extract_complaint_data(request: ComplaintRequest):
     try:
+        # Ticket ID Generate
+        ticket_id = f"RES-{random.randint(1000, 9999)}"
+
         # Groq API Call
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
@@ -62,28 +71,25 @@ async def extract_complaint_data(request: ComplaintRequest):
         if ai_text.startswith("```json"): ai_text = ai_text.replace("```json", "").replace("```", "").strip()
         extracted_data = json.loads(ai_text)
         
-        # SQLite Database Save
+        # Database Save
         conn = sqlite3.connect("resilink.db")
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO complaints (raw_text, location, resource_type, severity) VALUES (?, ?, ?, ?)",
-                       (request.text, extracted_data.get('location'), extracted_data.get('resource_type'), extracted_data.get('severity')))
+        cursor.execute("INSERT INTO complaints (ticket_id, name, phone, raw_text, location, resource_type, severity) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                       (ticket_id, request.name, request.phone, request.text, extracted_data.get('location'), extracted_data.get('resource_type'), extracted_data.get('severity')))
         conn.commit()
         conn.close()
         
-        return {"status": "success", "data": extracted_data}
+        return {"status": "success", "ticket_id": ticket_id, "data": extracted_data}
         
     except Exception as e:
         print("ERROR:", str(e))
         raise HTTPException(status_code=500, detail=str(e))
     
-
 @app.get("/hotspots")
 def get_hotspots():
     try:
         conn = sqlite3.connect("resilink.db")
         cursor = conn.cursor()
-        
-        # SQL query to group complaints by location and resource
         cursor.execute("""
             SELECT location, resource_type, COUNT(*) as count 
             FROM complaints 
@@ -93,13 +99,11 @@ def get_hotspots():
         rows = cursor.fetchall()
         conn.close()
         
-        # Format the data for React
         hotspots = [{"location": r[0], "resource": r[1], "count": r[2]} for r in rows]
         return {"status": "success", "data": hotspots}
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 class LetterRequest(BaseModel):
     location: str
@@ -108,7 +112,6 @@ class LetterRequest(BaseModel):
 @app.post("/generate-letter")
 async def generate_official_letter(request: LetterRequest):
     try:
-        # Pura prompt District Collector ke liye
         prompt = f"""
         Act as a professional civic grievance AI. Write a formal letter to the District Collector.
         Subject: Urgent action required regarding severe shortage of {request.resource} in {request.location}.
@@ -116,7 +119,7 @@ async def generate_official_letter(request: LetterRequest):
         Keep it formal, concise, and professional. Do not include placeholders like [Your Name].
         """
         
-        url = "https://api.groq.com/openai/v1/chat/completions"
+        url = "[https://api.groq.com/openai/v1/chat/completions](https://api.groq.com/openai/v1/chat/completions)"
         headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
         payload = {
             "model": "llama-3.3-70b-versatile",
@@ -126,7 +129,6 @@ async def generate_official_letter(request: LetterRequest):
         
         response = requests.post(url, json=payload, headers=headers)
         data = response.json()
-        
         draft = data['choices'][0]['message']['content'].strip()
         
         return {"status": "success", "letter": draft}
