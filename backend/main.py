@@ -119,7 +119,7 @@ async def generate_official_letter(request: LetterRequest):
         Keep it formal, concise, and professional. Do not include placeholders like [Your Name].
         """
         
-        url = "[https://api.groq.com/openai/v1/chat/completions](https://api.groq.com/openai/v1/chat/completions)"
+        url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
         payload = {
             "model": "llama-3.3-70b-versatile",
