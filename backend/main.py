@@ -32,7 +32,7 @@ class ComplaintRequest(BaseModel):
 
 # Naya Database Setup (Name aur Phone ke sath)
 def init_db():
-    conn = sqlite3.connect("resilink.db")
+    conn = sqlite3.connect("resilink_v2.db")
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS complaints (
@@ -72,7 +72,7 @@ async def extract_complaint_data(request: ComplaintRequest):
         extracted_data = json.loads(ai_text)
         
         # Database Save
-        conn = sqlite3.connect("resilink.db")
+        conn = sqlite3.connect("resilink_v2.db")
         cursor = conn.cursor()
         cursor.execute("INSERT INTO complaints (ticket_id, name, phone, raw_text, location, resource_type, severity) VALUES (?, ?, ?, ?, ?, ?, ?)",
                        (ticket_id, request.name, request.phone, request.text, extracted_data.get('location'), extracted_data.get('resource_type'), extracted_data.get('severity')))
@@ -88,7 +88,7 @@ async def extract_complaint_data(request: ComplaintRequest):
 @app.get("/hotspots")
 def get_hotspots():
     try:
-        conn = sqlite3.connect("resilink.db")
+        conn = sqlite3.connect("resilink_v2.db")
         cursor = conn.cursor()
         cursor.execute("""
             SELECT location, resource_type, COUNT(*) as count 
