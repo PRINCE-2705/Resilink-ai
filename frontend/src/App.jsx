@@ -116,7 +116,7 @@ function App() {
           <textarea 
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="E.g., The gas agency in Limbayat hasn't had stock for 2 weeks..."
+            placeholder="E.g., The gas agency in Limbayat hasn't had stock for 2 weeks... location mustbe specified"
             className="w-full h-32 p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
           />
           
