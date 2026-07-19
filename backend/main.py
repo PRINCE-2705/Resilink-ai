@@ -1,3 +1,4 @@
+from datetime import datetime
 import requests
 import json
 import sqlite3
@@ -112,11 +113,41 @@ class LetterRequest(BaseModel):
 @app.post("/generate-letter")
 async def generate_official_letter(request: LetterRequest):
     try:
+        # 1. Database se us location ki asli citizen reports nikalo
+        conn = sqlite3.connect("resilink_v2.db")
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT raw_text FROM complaints 
+            WHERE location = ? AND resource_type = ?
+            LIMIT 5
+        """, (request.location, request.resource))
+        rows = cursor.fetchall()
+        conn.close()
+        
+        # Reports ko ek text mein jodo
+        complaints_text = "\n".join([f"- {row[0]}" for row in rows])
+        today_date = datetime.now().strftime("%d %B %Y")
+        
+        # 2. Smart AI Prompt (Jo context samajh kar letter likhega)
         prompt = f"""
-        Act as a professional civic grievance AI. Write a formal letter to the District Collector.
-        Subject: Urgent action required regarding severe shortage of {request.resource} in {request.location}.
-        Body: Mention that multiple citizens have reported this crisis. Request immediate administrative intervention.
-        Keep it formal, concise, and professional. Do not include placeholders like [Your Name].
+        Act as a highly professional Indian Administrative Assistant.
+        Write a formal official letter to the District Collector of {request.location}.
+        Date: {today_date}
+        
+        Here are the recent citizen reports regarding '{request.resource}' in {request.location}:
+        {complaints_text}
+        
+        Task:
+        Analyze the citizen reports. 
+        - If the reports indicate the issue is SOLVED, FIXED, or POSITIVE: Draft a 'Status Update Letter' informing the Collector that the situation is normal and the resource supply is restored.
+        - If the reports indicate an ONGOING CRISIS or SHORTAGE: Draft an 'Urgent Grievance Letter' requesting immediate administrative intervention.
+        
+        Rules for the letter:
+        - Make it look exactly like a real, ready-to-print official Indian government letter.
+        - DO NOT use ANY brackets or placeholders like [Name], [District Name], [Your Name], or [Formal Closing].
+        - Address it properly to: "The District Collector, District Magistrate Office, {request.location}, Gujarat".
+        - Sign off exactly as: "Nodal Officer, Resilink AI Civic Monitoring System".
+        - Keep it concise, authoritative, and highly professional.
         """
         
         url = "https://api.groq.com/openai/v1/chat/completions"
@@ -134,4 +165,5 @@ async def generate_official_letter(request: LetterRequest):
         return {"status": "success", "letter": draft}
         
     except Exception as e:
+        print("Letter Gen Error:", str(e))
         raise HTTPException(status_code=500, detail=str(e))
