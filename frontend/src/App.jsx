@@ -11,6 +11,9 @@ function App() {
   const [ticketId, setTicketId] = useState(null);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const [submittedName, setSubmittedName] = useState("");
+  const [submittedPhone, setSubmittedPhone] = useState("");
   
   const [hotspots, setHotspots] = useState([]);
   const [generatedLetter, setGeneratedLetter] = useState("");
@@ -23,7 +26,6 @@ function App() {
     }
     setLoading(true);
     try {
-      // YAHAN URL THEEK KIYA HAI 👇
       const response = await axios.post("https://resilink-ai.onrender.com/extract", { 
         name: name,
         phone: phone,
@@ -31,6 +33,10 @@ function App() {
       });
       setResult(response.data.data);
       setTicketId(response.data.ticket_id);
+
+      setSubmittedName(name);
+      setSubmittedPhone(phone);
+
       setText(""); 
       setName("");
       setPhone("");
@@ -43,7 +49,6 @@ function App() {
 
   const fetchHotspots = async () => {
     try {
-      // YAHAN URL THEEK KIYA HAI 👇
       const response = await axios.get("https://resilink-ai.onrender.com/hotspots");
       setHotspots(response.data.data);
     } catch (error) {
@@ -54,7 +59,6 @@ function App() {
   const handleGenerateLetter = async (location, resource) => {
     setLetterLoading(true);
     try {
-      // YAHAN URL THEEK KIYA HAI 👇
       const response = await axios.post("https://resilink-ai.onrender.com/generate-letter", {
         location: location,
         resource: resource
@@ -139,8 +143,23 @@ function App() {
                 <p><strong>Resource:</strong> {result.resource_type}</p>
                 <p><strong>Severity:</strong> <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-sm">{result.severity}</span></p>
               </div>
+              
+              {/* 👇 WHATSAPP BUTTON YAHAN ADD KIYA HAI 👇 */}
+              <button 
+                onClick={() => {
+                  // %0A ka matlab WhatsApp mein 'Enter' (New Line) hota hai
+                  const msg = `Hello ${submittedName},%0A%0AYour civic complaint has been registered on *Resilink AI*.%0A%0A*Ticket ID:* ${ticketId}%0A*Issue:* ${result.resource_type}%0A*Location:* ${result.location}%0A*Severity:* ${result.severity}%0A%0AAuthorities have been notified.`;
+                  window.open(`https://wa.me/91${submittedPhone}?text=${msg}`, '_blank');
+                }}
+                className="mt-6 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md"
+              >
+                📲 Send Status to Citizen via WhatsApp
+              </button>
+              {/* 👆 WHATSAPP BUTTON YAHAN KHATAM 👆 */}
+              
             </div>
           )}
+          
         </div>
       )}
 
